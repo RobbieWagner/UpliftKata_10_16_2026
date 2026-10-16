@@ -10,3 +10,18 @@ Commit 3
 - Implemented the UpdateQuality method 
 - Ensured happy path test works
 In the next commit, I create more unit tests for the UpdateQualityMethod, one for each of the unique cases listed in the called out rules for items
+
+Commit 4
+- Added unit tests to cover the business rules:
+"""
+- Once the sell by date has passed, Quality degrades twice as fast
+- The Quality of an item is never negative
+- "Aged Brie" actually increases in Quality the older it gets
+- The Quality of an item is never more than 50
+- "Sulfuras", being a legendary item, never has to be sold or decreases in Quality
+- "Backstage passes", like aged brie, increases in Quality as its SellIn value approaches;
+Quality increases by 2 when there are 10 days or less and by 3 when there are 5 days or less but
+Quality drops to 0 after the concert
+"""
+- Tests currently fail as most haven't been implemented
+Next commit, I will implement a version of this UpdateQuality Method that will pass all of the created unit tests
