@@ -50,6 +50,36 @@ namespace Advanced.Gilded.Rose.Tests
         }
 
         [Fact]
+        public void UpdateQuality_DecreasesConjuredItemQualityTwiceAsFast()
+        {
+            var item = new Item(1, "Conjured Mana Cake", 10, 5);
+
+            new ItemQualityUpdater().UpdateQuality(new List<Item> { item });
+
+            Assert.Equal(new Item(1, "Conjured Mana Cake", 8, 4), item);
+        }
+
+        [Fact]
+        public void UpdateQuality_DecreasesConjuredItemQualityFourTimesAfterSellByDate()
+        {
+            var item = new Item(1, "Conjured Mana Cake", 10, 0);
+
+            new ItemQualityUpdater().UpdateQuality(new List<Item> { item });
+
+            Assert.Equal(new Item(1, "Conjured Mana Cake", 6, -1), item);
+        }
+
+        [Fact]
+        public void UpdateQuality_DoesNotDecreaseConjuredItemQualityBelowZero()
+        {
+            var item = new Item(1, "Conjured Mana Cake", 1, 0);
+
+            new ItemQualityUpdater().UpdateQuality(new List<Item> { item });
+
+            Assert.Equal(new Item(1, "Conjured Mana Cake", 0, -1), item);
+        }
+
+        [Fact]
         public void UpdateQuality_IncreasesAgedBrieQuality()
         {
             var item = new Item(1, "Aged Brie", 10, 5);
@@ -92,11 +122,11 @@ namespace Advanced.Gilded.Rose.Tests
         [Fact]
         public void UpdateQuality_IncreasesBackstagePassQualityByTwoWhenSellInIsTenOrLess()
         {
-            var item = new Item(1, "Backstage passes to a TAFKAL80ETC concert", 10, 11);
+            var item = new Item(1, "Backstage passes to a TAFKAL80ETC concert", 10, 10);
 
             new ItemQualityUpdater().UpdateQuality(new List<Item> { item });
 
-            Assert.Equal(new Item(1, "Backstage passes to a TAFKAL80ETC concert", 12, 10), item);
+            Assert.Equal(new Item(1, "Backstage passes to a TAFKAL80ETC concert", 12, 9), item);
         }
 
         [Fact]

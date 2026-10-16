@@ -45,112 +45,36 @@ namespace Advanced.Gilded.Rose
             await using var connection = new NpgsqlConnection(_config.GetConnectionString("Database"));
             await connection.OpenAsync();
 
-            await using var getAllCommand = connection.CreateCommand();
-            getAllCommand.CommandText = "select * from items";
-            await using var reader = await getAllCommand.ExecuteReaderAsync();
             var items = new List<Item>();
-            while (await reader.ReadAsync())
+            await using (var getAllCommand = connection.CreateCommand())
             {
-                items.Add(new Item(
-                    reader.GetInt32(0),
-                    reader.GetString(1),
-                    reader.GetInt32(2),
-                    reader.GetInt32(3)
-                    )
-                );
+                getAllCommand.CommandText = "select * from items";
+                await using var reader = await getAllCommand.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    items.Add(new Item(
+                        reader.GetInt32(0),
+                        reader.GetString(1),
+                        reader.GetInt32(2),
+                        reader.GetInt32(3))
+                    );
+                }
             }
 
-            for (var i = 0; i < items.Count; i++)
+            new ItemQualityUpdater().UpdateQuality(items);
+
+            await using var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText = "update items set quality = @quality, sellIn = @sellIn where id = @id";
+            updateCommand.Parameters.AddWithValue("quality", 0);
+            updateCommand.Parameters.AddWithValue("sellIn", 0);
+            updateCommand.Parameters.AddWithValue("id", 0);
+
+            foreach (var item in items)
             {
-                if (items[i].Name != "Aged Brie" && items[i].Name != "Backstage passes to a TAFKAL80ETC concert")
-                {
-                    if (items[i].Quality > 0)
-                    {
-                        if (items[i].Name != "Sulfuras, Hand of Ragnaros")
-                        {
-                            items[i].Quality = items[i].Quality - 1;
-                            await using var updateCommand = connection.CreateCommand();
-                            updateCommand.CommandText = $"update items set quality = {items[i].Quality} where id = {items[i].Id}";
-                            await updateCommand.ExecuteNonQueryAsync();
-                        }
-                    }
-                }
-                else
-                {
-                    if (items[i].Quality < 50)
-                    {
-                        items[i].Quality = items[i].Quality + 1;
-                        if (items[i].Name == "Backstage passes to a TAFKAL80ETC concert")
-                        {
-                            if (items[i].SellIn < 11)
-                            {
-                                if (items[i].Quality < 50)
-                                {
-                                    items[i].Quality = items[i].Quality + 1;
-                                    await using var updateCommand = connection.CreateCommand();
-                                    updateCommand.CommandText = $"update items set quality = {items[i].Quality} where id = {items[i].Id}";
-                                    await updateCommand.ExecuteNonQueryAsync();
-                                }
-                            }
-
-                            if (items[i].SellIn < 6)
-                            {
-                                if (items[i].Quality < 50)
-                                {
-                                    items[i].Quality = items[i].Quality + 1;
-                                    await using var updateCommand = connection.CreateCommand();
-                                    updateCommand.CommandText = $"update items set quality = {items[i].Quality} where id = {items[i].Id}";
-                                    await updateCommand.ExecuteNonQueryAsync();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (items[i].Name != "Sulfuras, Hand of Ragnaros")
-                {
-                    items[i].SellIn = items[i].SellIn - 1;
-                    await using var updateCommand = connection.CreateCommand();
-                    updateCommand.CommandText = $"update items set sellIn = {items[i].SellIn} where id = {items[i].Id}";
-                    await updateCommand.ExecuteNonQueryAsync();
-                }
-
-                if (items[i].SellIn < 0)
-                {
-                    if (items[i].Name != "Aged Brie")
-                    {
-                        if (items[i].Name != "Backstage passes to a TAFKAL80ETC concert")
-                        {
-                            if (items[i].Quality > 0)
-                            {
-                                if (items[i].Name != "Sulfuras, Hand of Ragnaros")
-                                {
-                                    items[i].Quality = items[i].Quality - 1;
-                                    await using var updateCommand = connection.CreateCommand();
-                                    updateCommand.CommandText = $"update items set quality = {items[i].Quality} where id = {items[i].Id}";
-                                    await updateCommand.ExecuteNonQueryAsync();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            items[i].Quality = items[i].Quality - items[i].Quality;
-                            await using var updateCommand = connection.CreateCommand();
-                            updateCommand.CommandText = $"update items set quality = {items[i].Quality} where id = {items[i].Id}";
-                            await updateCommand.ExecuteNonQueryAsync();
-                        }
-                    }
-                    else
-                    {
-                        if (items[i].Quality < 50)
-                        {
-                            items[i].Quality = items[i].Quality + 1;
-                            await using var updateCommand = connection.CreateCommand();
-                            updateCommand.CommandText = $"update items set quality = {items[i].Quality} where id = {items[i].Id}";
-                            await updateCommand.ExecuteNonQueryAsync();
-                        }
-                    }
-                }
+                updateCommand.Parameters["quality"].Value = item.Quality;
+                updateCommand.Parameters["sellIn"].Value = item.SellIn;
+                updateCommand.Parameters["id"].Value = item.Id;
+                await updateCommand.ExecuteNonQueryAsync();
             }
 
             return Ok();
